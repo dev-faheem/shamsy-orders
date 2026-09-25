@@ -14,8 +14,8 @@ function subscribe(onChange: () => void) {
   };
 }
 
-/** Live view of this user's outbox, plus the background sync loop. */
-export function useOutbox(userId: string) {
+/** Live view of this user's outbox, without sending anything. */
+export function useOutboxItems(userId: string) {
   const key = Outbox.storageKey(userId);
   // The stored string is a stable snapshot for React; it is parsed only when it changes.
   const raw = useSyncExternalStore(
@@ -23,7 +23,12 @@ export function useOutbox(userId: string) {
     () => window.localStorage.getItem(key),
     () => null,
   );
-  const items = useMemo(() => Outbox.parse(raw), [raw]);
+  return useMemo(() => Outbox.parse(raw), [raw]);
+}
+
+/** The outbox plus the background sync loop. Used once, by the app shell. */
+export function useOutbox(userId: string) {
+  const items = useOutboxItems(userId);
   const online = useOnline();
 
   useEffect(() => {

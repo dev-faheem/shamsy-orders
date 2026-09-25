@@ -2,14 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { Panel } from "./page-header";
-import { useOutbox } from "./use-outbox";
+import { useOutboxItems } from "./use-outbox";
 import { announceOutboxChange, outboxFor, syncNow } from "@/lib/send-order";
 import { t } from "@/i18n/en";
 
 /** Orders stored on this phone that the server has not accepted yet. */
 export function PendingOrders({ userId }: { userId: string }) {
   const router = useRouter();
-  const { items } = useOutbox(userId);
+  const items = useOutboxItems(userId);
   if (items.length === 0) return null;
 
   return (

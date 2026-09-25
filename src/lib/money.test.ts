@@ -45,6 +45,10 @@ describe("parseRate", () => {
     expect(parseRate("8200")).toBe(8200);
     expect(parseRate("8,200")).toBe(8200);
   });
+  it("reads a half-typed number as its digits, so typing 7,900 never flashes an error", () => {
+    expect(parseRate("7,9")).toBe(79);
+    expect(parseRate("7,90")).toBe(790);
+  });
   it("rejects decimals, blanks and junk", () => {
     expect(parseRate("8200.5")).toBeNull();
     expect(parseRate("")).toBeNull();

@@ -6,6 +6,7 @@ import { Notice } from "./notice";
 import { PageBody, PageHeader, Panel } from "./page-header";
 import { useCatalog } from "./use-catalog";
 import { useOnline } from "./use-online";
+import { useOutboxItems } from "./use-outbox";
 import { badgeCls, badgeStyle, inputCls } from "./styles";
 import { evaluateDraft, type Draft, type DraftLine, type EvaluatedLine } from "@/lib/order-draft";
 import { formatPercent, formatRate, formatSdg, formatUsd, parseRate, type DiscountTier } from "@/lib/money";
@@ -51,6 +52,9 @@ export function OrderScreen({ profile }: { profile: Profile }) {
   const [message, setMessage] = useState<{ kind: "error" | "info"; text: string } | null>(null);
   const [busyLine, setBusyLine] = useState<string | null>(null);
   const online = useOnline();
+  // The order this screen queued while offline, so the notice can follow it until it is sent.
+  const [queuedRef, setQueuedRef] = useState<string | null>(null);
+  const outboxItems = useOutboxItems(profile.id);
 
   // A fresh order starts at today's rate setting.
   const draft: Draft = useMemo(
@@ -181,6 +185,7 @@ export function OrderScreen({ profile }: { profile: Profile }) {
     if (!evaluation?.payload || saving) return;
     setSaving(true);
     setMessage(null);
+    setQueuedRef(null);
     const customer = catalog!.customers.find((c) => c.id === draft.customerId);
     const summary = `${customer?.name ?? ""} · ${formatUsd(evaluation.totals!.usdCents)} · ${formatSdg(evaluation.totals!.sdgPiastres)}`;
     const result = await outboxFor(profile.id).submit(evaluation.payload, postOrder, summary);
@@ -198,11 +203,13 @@ export function OrderScreen({ profile }: { profile: Profile }) {
     if (result.kind === "saved") {
       router.push(`/orders/${(result.order as { id: string }).id}?saved=1`);
     } else {
-      setMessage({ kind: "info", text: t.order.queued });
+      setQueuedRef(evaluation.payload.client_ref);
     }
   }
 
   const reasonText = evaluation.blockers.map((b) => t.order.reasons[b]).join(", ");
+  const queuedItem = queuedRef ? outboxItems.find((i) => i.payload.client_ref === queuedRef) : undefined;
+  const queued = queuedRef ? { status: queuedItem?.status ?? "sent", error: queuedItem?.error } : null;
 
   const startOver = (draft.lines.length > 0 || draft.customerId) && (
     <button
@@ -212,6 +219,7 @@ export function OrderScreen({ profile }: { profile: Profile }) {
         setRestored(false);
         setMessage(null);
         setRateNotice(null);
+        setQueuedRef(null);
       }}
       className="rounded-[3px] border border-line bg-white px-3 py-1.5 text-[13px] font-semibold text-ink-2 hover:border-ink-2 hover:text-ink"
     >
@@ -228,6 +236,15 @@ export function OrderScreen({ profile }: { profile: Profile }) {
             {source === "cache" && <Notice tone="warn">{t.order.catalogueOffline}</Notice>}
             {restored && <Notice tone="info">{t.order.draftRestored}</Notice>}
             {message && <Notice tone={message.kind === "error" ? "error" : "info"}>{message.text}</Notice>}
+            {queued && (
+              <Notice tone={queued.status === "failed" ? "error" : queued.status === "pending" ? "info" : "ok"}>
+                {queued.status === "failed"
+                  ? t.order.queuedRefused(queued.error?.message ?? "")
+                  : queued.status === "pending"
+                    ? t.order.queued
+                    : t.order.queuedSent}
+              </Notice>
+            )}
 
             <Panel title={t.order.sectionDealer}>
               <div className="grid gap-4 sm:grid-cols-2">

@@ -86,6 +86,8 @@ const en = {
       blocked: "a line above 5% needs the owner's approval",
     },
     queued: "No connection. The order is kept on this phone and will be sent automatically.",
+    queuedSent: "Back online: the order was sent.",
+    queuedRefused: (reason: string) => `The server refused the order that was waiting: ${reason}`,
     catalogueOffline: "Offline — using the product list saved on this phone.",
     catalogueMissing: "Cannot load products. Connect once so the phone can save the product list.",
     loading: "Loading…",

@@ -37,7 +37,9 @@ export interface OrderResult {
 }
 
 const USD_PATTERN = /^\d{1,3}(,\d{3})*(\.\d{1,2})?$|^\d+(\.\d{1,2})?$/;
-const RATE_PATTERN = /^\d{1,3}(,\d{3})*$|^\d+$/;
+// Digits with commas anywhere: "7,9" while typing "7,900" reads as 79, not as an error. The field
+// is reformatted when the adviser leaves it, so she always sees what was read.
+const RATE_PATTERN = /^\d[\d,]*$/;
 
 /** "2,070.55" → 207055. Blank → 0. Anything else (negatives, 3 decimals, dates) → null. */
 export function parseUsdToCents(input: string): number | null {

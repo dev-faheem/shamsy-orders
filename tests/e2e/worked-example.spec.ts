@@ -204,6 +204,9 @@ test("offline: the order is kept on the phone and sent when the connection retur
 
   await context.setOffline(false);
   await expect(page.getByText("1 order waiting to send")).toHaveCount(0, { timeout: 45_000 });
+  // The screen stops saying "no connection" once the order has gone through.
+  await expect(page.getByText("No connection. The order is kept on this phone")).toHaveCount(0);
+  await expect(page.getByText("Back online: the order was sent.")).toBeVisible();
   await page.goto("/orders");
   await expect(page.getByRole("row").filter({ hasText: "Nile Solar" }).filter({ hasText: "$2,020" })).toHaveCount(1);
 });
