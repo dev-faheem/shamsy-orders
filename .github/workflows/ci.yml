@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_placeholder
+
+  # Database rules and the phone walkthrough, against a real Supabase project.
+  # Runs when the repository has the secrets configured. Each run uses its own tenant.
+  integration:
+    needs: check
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      HAS_SECRETS: ${{ secrets.SUPABASE_SECRET_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.HAS_SECRETS == 'true'
+      - uses: actions/setup-node@v4
+        if: env.HAS_SECRETS == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - if: env.HAS_SECRETS == 'true'
+        run: npm ci && npx playwright install --with-deps chromium
+      - if: env.HAS_SECRETS == 'true'
+        run: npm run test:db
+      - if: env.HAS_SECRETS == 'true'
+        run: npm run build && npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always() && env.HAS_SECRETS == 'true'
+        with:
+          name: playwright-report
+          path: playwright-report

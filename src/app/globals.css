@@ -1,26 +1,49 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Shamsy house style, taken from the dashboard prototype (shamsy-dashboard-v2.html). */
+@theme {
+  --color-brand: #0e3b2e;
+  --color-brand-2: #14503c;
+  --color-gold: #c9922e;
+  --color-gold-l: #e0b45c;
+  --color-ink: #16202b;
+  --color-ink-2: #5a6772;
+  --color-line: #dfe5e9;
+  --color-panel: #f4f7f6;
+  --color-ok: #27ae60;
+  --color-warn: #e67e22;
+  --color-urgent: #d9534f;
+
+  /* Discount tiers */
+  --color-sand: #f3e4c1;
+  --color-sand-edge: #c9922e;
+  --color-sand-ink: #6b4a0f;
+  --color-red-tint: #fbe1df;
+  --color-red-edge: #d9534f;
+  --color-red-ink: #8f1f1a;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #fff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Big, thumb-friendly controls; 16px inputs stop iOS from zooming. */
+input,
+select,
+button {
+  font-size: 16px;
 }

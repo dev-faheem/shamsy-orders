@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shamsy — order screen (trial task)
 
-## Getting Started
+The screen where a sales adviser records a dealer order: fixed dollar prices, a discount per line,
+one exchange rate for the whole order, totals in US dollars and Sudanese pounds.
 
-First, run the development server:
+**Stack:** Next.js 16 (App Router, TypeScript), Supabase (Postgres + Auth), Tailwind CSS 4, Vercel.
+
+## The rules, and where each one is enforced
+
+The browser only previews. **Every rule is enforced in Postgres**, so calling the API directly,
+or even writing the tables with the service-role key, meets the same rules.
+
+| Rule | Enforced by (`supabase/migrations/…_orders.sql`) |
+|---|---|
+| Prices are fixed; only the owner may override one | `place_order()` takes the price from `products`; a different price from a non-owner → `PRICE_LOCKED` |
+| Discount per line: ≤ 3% sand, ≤ 5% red, > 5% blocked | trigger `check_order_line` on every `order_lines` insert recomputes the % and colour from cents; blocked needs a matching, owner-decided, unused approval → `DISCOUNT_NEEDS_APPROVAL` / `APPROVAL_INVALID` |
+| One rate per order, never below the minimum | trigger `check_order` on `orders` → `RATE_BELOW_MINIMUM`; the minimum is a setting the owner changes |
+| A saved order never changes | triggers block `UPDATE`/`DELETE`/`TRUNCATE` on `orders` and `order_lines` for every role → `ORDER_IMMUTABLE` |
+| Pounds always equal dollars × the stored rate | `CHECK (total_sdg_piastres = total_usd_cents * rate_sdg_per_usd)`; order total = sum of lines, checked at commit |
+| Money is integers | `bigint` US cents and SDG piastres throughout; no floats in SQL or TypeScript |
+| Advisers see their own orders; no one sees another tenant | row level security on every table; writes only through `SECURITY DEFINER` functions |
+
+A discount's colour is decided on exact cents (`discount × 10000 ≤ value × 500`), never on the rounded
+percentage: 5.004% shows as 5.00% but is still blocked.
+
+### Owner approval of a line above 5%
+
+An unsaved order has no id, so an approval is bound to what was approved: **dealer, product,
+quantity, unit price and discount**. It can be used once. The adviser taps *Ask owner to approve*;
+the owner sees it under **Approvals** and approves; the adviser's screen picks it up by itself
+(polling every 4 s, which holds up better on 3G than a socket). If the adviser then changes the
+discount, quantity or dealer, the approval stops counting. The owner's own orders are approved on
+the spot.
+
+## Proving the 5% block holds on the server
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run prove -- https://<deployed-app>     # or with no argument for http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Signs in as the adviser and tries to save 1 × Hope 16.0LM-A1 with $150 off (7.25%) four ways: through
+`/api/orders`, straight to the database API, lying that the line is "sand" at 1%, and writing the
+`orders` table directly. All four are refused. The same checks run in `tests/db` and `tests/e2e`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+By hand:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# 1. Get an access token for the adviser
+curl -s "$SUPABASE_URL/auth/v1/token?grant_type=password" -H "apikey: $PUBLISHABLE_KEY" \
+  -H "Content-Type: application/json" -d '{"email":"sana@shamsy.test","password":"sana-demo-2026"}'
+# 2. Try to save the 7.25% line
+curl -i "$APP/api/orders" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"client_ref":"<new uuid>","customer_id":"<id>","rate":8200,
+       "lines":[{"product_id":"<Hope 16 id>","quantity":1,"discount_usd_cents":15000}]}'
+# → HTTP 422 {"code":"DISCOUNT_NEEDS_APPROVAL", ...}
+```
 
-## Learn More
+## Working on a dropped connection
 
-To learn more about Next.js, take a look at the following resources:
+- The order being built is kept on the phone (`localStorage`) — a reload or a closed tab loses nothing.
+- **Save** writes the order to an outbox on the phone *first*, then sends it. If the connection drops,
+  it stays there and is sent when the connection returns (every 30 s and on the `online` event).
+- Each order carries a `client_ref` made on the phone. The server stores an order once per
+  `client_ref`, so a retry after a timeout never makes a duplicate.
+- If the server refuses a queued order (for example, the owner raised the minimum rate meanwhile),
+  it is kept as *refused* with the reason, never silently dropped.
+- A service worker keeps the screen itself available offline; the product list, dealers and rates
+  are cached from the last good load. Approvals need a connection.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Demo accounts (invented data)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Role | Email | Password |
+|---|---|---|
+| Sales adviser | `sana@shamsy.test` | `sana-demo-2026` |
+| Sales adviser | `marwa@shamsy.test` | `marwa-demo-2026` |
+| Owner | `owner@shamsy.test` | `owner-demo-2026` |
 
-## Deploy on Vercel
+## Local setup
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm install
+cp .env.example .env.local        # fill in from the Supabase dashboard
+npm run db:push                   # apply supabase/migrations
+npm run seed                      # tenant, 4 products, 3 dealers, 3 users (safe to re-run)
+npm run dev                       # http://localhost:3000
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Supabase CLI local stack (`npx supabase start`, needs Docker) works too: put its URL and keys in `.env.local`.
+
+## Tests
+
+```bash
+npm test            # unit: money arithmetic, discount tiers, the draft, the outbox (51 tests)
+npm run test:db     # database rules through the public API, as each role (28 tests)
+npm run test:e2e    # the worked example on a Pixel 7 screen, incl. owner approval and offline (4 tests)
+npm run test:all
+```
+
+`test:db` and `test:e2e` create a fresh tenant with its own users each run, so they never touch the
+demo data and never depend on each other. (Saved orders can't be deleted, by design, so test tenants
+stay behind; they are invisible to everyone else.)
+
+## Layout
+
+```
+supabase/migrations/     schema, rules, RLS, API functions
+src/lib/money.ts         integer arithmetic + formatting (mirrors the SQL)
+src/lib/order-draft.ts   what the screen derives from the order being built
+src/lib/outbox.ts        write-to-phone-first queue
+src/app/api/orders       POST /api/orders → place_order()
+src/components/order-screen.tsx   the screen
+src/i18n/en.ts           every user-facing string (Arabic = one more file)
+scripts/                 seed, fixtures, proof script
+tests/db, tests/e2e      integration and phone walkthrough
+```
+
+## Deployment
+
+Vercel project with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The app
+never needs the secret key at runtime; only the seed script and the tests use it. CI (`.github/workflows/ci.yml`) runs
+typecheck, lint, unit tests and build on every push; with `SUPABASE_*` repository secrets set it
+also runs the database and phone tests.
