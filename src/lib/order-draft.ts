@@ -17,7 +17,7 @@ export interface DraftProduct {
   price_usd_cents: number;
 }
 
-export interface DraftApproval {
+interface DraftApproval {
   id: string;
   status: "pending" | "approved" | "rejected";
   customerId: string;
@@ -44,9 +44,9 @@ export interface Draft {
   lines: DraftLine[];
 }
 
-export type ApprovalState = "not-needed" | "needed" | "pending" | "approved" | "rejected" | "stale";
-export type LineError = "unknown-product" | "discount-invalid" | "discount-too-big" | "price-invalid";
-export type Blocker = "customer" | "lines" | "rate" | "invalid" | "blocked";
+type ApprovalState = "not-needed" | "needed" | "pending" | "approved" | "rejected" | "stale";
+type LineError = "unknown-product" | "discount-invalid" | "discount-too-big" | "price-invalid";
+type Blocker = "customer" | "lines" | "rate" | "invalid" | "blocked";
 
 export interface EvaluatedLine {
   line: DraftLine;

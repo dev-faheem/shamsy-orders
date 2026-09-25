@@ -75,7 +75,9 @@ describe("worked example", () => {
     expect(error).toBeNull();
     expect(data.total_usd_cents).toBe(549000);
     expect(data.total_sdg_piastres).toBe(4501800000);
-    expect(data.lines[2]).toMatchObject({ discount_bp: 725, discount_tier: "blocked", approved_by: owner.id });
+    expect(data.lines[2]).toMatchObject({
+      discount_bp: 725, discount_tier: "blocked", approved_by: owner.id, approved_by_name: "Test Owner",
+    });
 
     // One approval, one line: it cannot be reused for a second order.
     const again = await placeOrder(adviser, [{ ...line3, approval_id: req.data.id }]);

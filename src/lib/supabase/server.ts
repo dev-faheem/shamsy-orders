@@ -2,6 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 /** Supabase client acting as the signed-in user (from the session cookie). RLS applies. */
 export async function supabaseServer() {
@@ -36,12 +37,15 @@ export interface Profile {
   order_prefix: string;
 }
 
-/** The signed-in user's profile, or null. Verifies the JWT rather than trusting the cookie. */
-export async function currentProfile(): Promise<Profile | null> {
+/**
+ * The signed-in user's profile, or null. Verifies the JWT rather than trusting the cookie.
+ * Cached per request, so the layout and the page share one lookup.
+ */
+export const currentProfile = cache(async (): Promise<Profile | null> => {
   const supabase = await supabaseServer();
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims?.sub;
   if (!userId) return null;
   const { data } = await supabase.from("profiles").select("id, tenant_id, full_name, role, order_prefix").eq("id", userId).single();
   return (data as Profile) ?? null;
-}
+});

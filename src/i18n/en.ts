@@ -2,20 +2,27 @@
  * Every user-facing string lives here, so Arabic is a translation file and not a rebuild.
  * Amounts are formatted by src/lib/money.ts, never by string concatenation here.
  */
-export const en = {
+const en = {
   app: {
-    name: "Shamsy",
-    tagline: "Orders",
     online: "Online",
     offline: "Offline",
     waitingToSync: (n: number) => (n === 1 ? "1 order waiting to send" : `${n} orders waiting to send`),
     signOut: "Sign out",
   },
   nav: {
+    label: "Main menu",
+    sales: "Sales",
+    control: "Control",
     newOrder: "New order",
     orders: "Orders",
     approvals: "Approvals",
     settings: "Settings",
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
+    waiting: (n: number) => `${n} waiting`,
+  },
+  header: {
+    todayRate: "Today's rate:",
   },
   roles: { owner: "Owner", adviser: "Sales adviser", marketing: "Marketing", warehouse: "Warehouse" },
   login: {
@@ -26,7 +33,6 @@ export const en = {
     busy: "Signing in…",
     failed: "Email or password is not correct.",
     demo: "Demo accounts",
-    useAccount: "Use",
   },
   order: {
     title: "New order",
@@ -49,6 +55,10 @@ export const en = {
     overrideActive: (catalogue: string) => `Owner price (list ${catalogue})`,
     lineValue: "Line value",
     discount: "Discount (USD)",
+    discountShort: "Discount",
+    sectionDealer: "Dealer and rate",
+    sectionLines: (n: number) => (n ? `Order lines (${n})` : "Order lines"),
+    sectionLinesLabel: "Order lines",
     discountInvalid: "Enter dollars, e.g. 40 or 40.50.",
     discountTooBig: "The discount is larger than the line.",
     lineTotal: "Line total",
@@ -81,6 +91,7 @@ export const en = {
     loading: "Loading…",
     draftRestored: "Your unsaved order was restored.",
     clear: "Start over",
+    confirmClear: "Remove all lines and start a new order?",
   },
   view: {
     savedTitle: (n: string) => `Order ${n} saved`,
@@ -93,6 +104,11 @@ export const en = {
     approvedBy: (name: string) => `Approved by ${name}`,
     newOrder: "New order",
     notFound: "Order not found, or you do not have access to it.",
+    linesTitle: "Order lines",
+    details: "Order details",
+    product: "Product",
+    discount: "Discount",
+    total: "Total",
   },
   list: {
     title: "Orders",
@@ -104,6 +120,10 @@ export const en = {
     retry: "Send now",
     prev: "Newer",
     next: "Older",
+    recent: (n: number) => (n === 1 ? "1 order" : `${n} orders`),
+    order: "Order",
+    dealer: "Dealer",
+    total: "Total",
   },
   approvals: {
     title: "Discount approvals",
@@ -113,6 +133,9 @@ export const en = {
     reject: "Decline",
     requestedBy: (name: string) => `Asked by ${name}`,
     recent: "Recently decided",
+    waiting: (n: number) => (n === 0 ? "Waiting for you" : n === 1 ? "1 waiting for you" : `${n} waiting for you`),
+    approved: "Approved",
+    declined: "Declined",
   },
   settings: {
     title: "Settings",
@@ -127,7 +150,9 @@ export const en = {
     priceSaved: "Price saved. Saved orders keep the price they were sold at.",
     thresholds: (sand: string, red: string) => `Discount colours: sand up to ${sand}, red up to ${red}, above that needs approval.`,
     history: "Recent changes",
+    rateChange: (day: string, min: string) => `rate ${day}, minimum ${min}`,
   },
 } as const;
 
+/** The active language. Arabic will be a second object of the same shape. */
 export const t = en;

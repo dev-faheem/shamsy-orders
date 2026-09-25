@@ -1,16 +1,18 @@
 import { redirect } from "next/navigation";
 import { ApprovalsList } from "@/components/approvals-list";
-import { currentProfile } from "@/lib/supabase/server";
+import { Notice } from "@/components/notice";
+import { PageBody, PageHeader } from "@/components/page-header";
+import { currentProfile, supabaseServer } from "@/lib/supabase/server";
 import { t } from "@/i18n/en";
 
 export default async function ApprovalsPage() {
   const profile = await currentProfile();
   if (!profile) redirect("/login");
-  if (profile.role !== "owner") return <p className="rounded-md border border-line bg-white p-4">{t.approvals.ownerOnly}</p>;
+  const { data: settings } = await (await supabaseServer()).from("settings").select("day_rate_sdg_per_usd").single();
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-brand">{t.approvals.title}</h1>
-      <ApprovalsList />
-    </div>
+    <>
+      <PageHeader title={t.approvals.title} rate={settings?.day_rate_sdg_per_usd} />
+      <PageBody>{profile.role !== "owner" ? <Notice tone="warn">{t.approvals.ownerOnly}</Notice> : <ApprovalsList />}</PageBody>
+    </>
   );
 }

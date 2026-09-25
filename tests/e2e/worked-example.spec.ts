@@ -135,7 +135,7 @@ test("worked example: colours, block, approval, stored rate", async ({ page, bro
   await owner.context.close();
 });
 
-test("a rate of 7,900 is refused and returns to 8,000", async ({ page }) => {
+test("a rate of 7,900 is refused and returns to 8,000", async ({ page, context }) => {
   await signIn(page, "adviser");
   const rate = page.getByTestId("rate");
   await rate.fill("7,900");
@@ -146,6 +146,16 @@ test("a rate of 7,900 is refused and returns to 8,000", async ({ page }) => {
   await expect(rate).toHaveValue("8,000");
   await expect(page.locator("#rate-help")).toHaveText("Below the minimum — set back to 8,000.");
   await expect(page.getByTestId("add-SPF-6000-ES-PLUS")).toBeEnabled();
+
+  // Saved offline, the screen stays put: the next order must start clean, without the old "set back" message.
+  await page.getByTestId("customer").selectOption({ index: 1 });
+  await page.getByTestId("add-SPF-6000-ES-PLUS").click();
+  await context.setOffline(true);
+  await page.getByTestId("save").click();
+  await expect(page.getByText("No connection. The order is kept on this phone")).toBeVisible();
+  await expect(page.locator("#rate-help")).toHaveText("One rate for the whole order. Minimum 8,000.");
+  await context.setOffline(false);
+  await expect(page.getByText("1 order waiting to send")).toHaveCount(0, { timeout: 45_000 });
 });
 
 test("the server refuses 7.25% without approval, even when called directly", async ({ page, request }) => {
@@ -195,6 +205,5 @@ test("offline: the order is kept on the phone and sent when the connection retur
   await context.setOffline(false);
   await expect(page.getByText("1 order waiting to send")).toHaveCount(0, { timeout: 45_000 });
   await page.goto("/orders");
-  await expect(page.getByText("Nile Solar — Omdurman").first()).toBeVisible();
-  await expect(page.getByText("$2,020").first()).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "Nile Solar" }).filter({ hasText: "$2,020" })).toHaveCount(1);
 });

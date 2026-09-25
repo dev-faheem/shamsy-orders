@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import type { OutboxItem } from "@/lib/outbox";
-import { OUTBOX_EVENT, outboxFor, syncNow } from "@/lib/send-order";
+import { Outbox } from "@/lib/outbox";
+import { OUTBOX_EVENT, syncNow } from "@/lib/send-order";
 import { useOnline } from "./use-online";
 
 function subscribe(onChange: () => void) {
@@ -16,17 +16,14 @@ function subscribe(onChange: () => void) {
 
 /** Live view of this user's outbox, plus the background sync loop. */
 export function useOutbox(userId: string) {
-  const key = `shamsy.outbox.${userId}`;
-  // The raw string is a stable snapshot; parsing happens below.
+  const key = Outbox.storageKey(userId);
+  // The stored string is a stable snapshot for React; it is parsed only when it changes.
   const raw = useSyncExternalStore(
     subscribe,
-    () => window.localStorage.getItem(key) ?? "[]",
-    () => "[]",
+    () => window.localStorage.getItem(key),
+    () => null,
   );
-  const items = useMemo<OutboxItem[]>(() => {
-    void raw;
-    return typeof window === "undefined" ? [] : outboxFor(userId).list();
-  }, [raw, userId]);
+  const items = useMemo(() => Outbox.parse(raw), [raw]);
   const online = useOnline();
 
   useEffect(() => {

@@ -16,7 +16,7 @@ export function ServiceWorker() {
 export async function clearOfflineCaches() {
   try {
     navigator.serviceWorker?.controller?.postMessage("clear");
-    if ("caches" in window) await caches.delete("shamsy-v1");
+    if ("caches" in window) await caches.delete("shamsy-v2");
   } catch {
     // ignore
   }

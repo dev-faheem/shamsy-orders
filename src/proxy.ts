@@ -33,9 +33,14 @@ export async function proxy(request: NextRequest) {
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
+  if (signedIn && path === "/login") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/orders/new";
+    return NextResponse.redirect(url);
+  }
   return response;
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|icon.*\\.png).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|icon\\.svg|icon.*\\.png).*)"],
 };

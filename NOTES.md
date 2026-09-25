@@ -14,6 +14,13 @@ It works on a phone, keeps working on a dropped connection, and every rate, thre
 setting the owner changes, not something written into the code. The worked example gives exactly
 the numbers in the brief, and an automated phone test replays it on every change.
 
+The look follows your dashboard prototype: the logo, the green sidebar (a menu button on a phone),
+the white page header with today's rate, grey panels with uppercase titles, and the same badges.
+I haven't seen the sales tool itself, so its layout will be matched once you share it.
+
+The rate field starts at today's rate setting, so the adviser only types a rate when she wants a
+higher one. It can never go below the minimum. A saved order keeps the rate it was saved with.
+
 ## How the 5% block was proved
 
 Four ways, and each is refused:

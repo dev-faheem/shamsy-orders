@@ -12,7 +12,7 @@
     "test:db": "vitest run --project db",
     "test:e2e": "playwright test",
     "test:all": "npm run test && npm run test:db && npm run build && npm run test:e2e",
-    "db:push": "node -e \"require('dotenv').config({path:'.env.local',quiet:true});require('child_process').execSync('npx supabase db push --yes --db-url \\\"'+process.env.DATABASE_URL+'\\\"',{stdio:'inherit'})\"",
+    "db:push": "tsx scripts/db-push.ts",
     "seed": "tsx scripts/seed.ts",
     "prove": "tsx scripts/prove-server-block.ts"
   },

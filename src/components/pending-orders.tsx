@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Panel } from "./page-header";
 import { useOutbox } from "./use-outbox";
 import { announceOutboxChange, outboxFor, syncNow } from "@/lib/send-order";
 import { t } from "@/i18n/en";
@@ -12,19 +13,21 @@ export function PendingOrders({ userId }: { userId: string }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="rounded-lg border-2 border-warn bg-white p-4 space-y-2">
-      <h2 className="font-semibold">{t.list.pendingTitle}</h2>
+    <Panel title={t.list.pendingTitle}>
       <ul className="space-y-2">
         {items.map((i) => (
-          <li key={i.payload.client_ref} className="rounded-md border border-line p-3 text-sm">
+          <li
+            key={i.payload.client_ref}
+            className={`rounded-[4px] border border-s-4 border-line bg-white p-3 text-[13px] ${i.status === "failed" ? "border-s-urgent" : "border-s-warn"}`}
+          >
             <div className="flex justify-between gap-2">
-              <span>{i.summary}</span>
-              <span className={i.status === "failed" ? "text-red-ink font-medium" : "text-warn font-medium"}>
+              <span className="font-semibold">{i.summary}</span>
+              <span className={i.status === "failed" ? "font-bold text-red-ink" : "font-bold text-[#8a4a0f]"}>
                 {i.status === "failed" ? t.list.failed : t.list.pending}
               </span>
             </div>
             {i.error && <p className="mt-1 text-red-ink">{i.error.message}</p>}
-            <div className="mt-2 flex gap-3">
+            <div className="mt-2 flex gap-3 font-semibold text-brand">
               {i.status === "pending" && (
                 <button
                   className="underline"
@@ -51,6 +54,6 @@ export function PendingOrders({ userId }: { userId: string }) {
           </li>
         ))}
       </ul>
-    </section>
+    </Panel>
   );
 }

@@ -64,8 +64,9 @@ curl -i "$APP/api/orders" -H "Authorization: Bearer $TOKEN" -H "Content-Type: ap
   `client_ref`, so a retry after a timeout never makes a duplicate.
 - If the server refuses a queued order (for example, the owner raised the minimum rate meanwhile),
   it is kept as *refused* with the reason, never silently dropped.
-- A service worker keeps the screen itself available offline; the product list, dealers and rates
-  are cached from the last good load. Approvals need a connection.
+- A service worker keeps the screen itself available offline, so the app opens and reloads with no
+  signal once it has been opened online. The product list, dealers and rates come from the last good
+  load. Approvals need a connection. (Tested in `tests/e2e/offline-reload.spec.ts`.)
 
 ## Demo accounts (invented data)
 
@@ -92,7 +93,9 @@ Supabase CLI local stack (`npx supabase start`, needs Docker) works too: put its
 ```bash
 npm test            # unit: money arithmetic, discount tiers, the draft, the outbox (51 tests)
 npm run test:db     # database rules through the public API, as each role (28 tests)
-npm run test:e2e    # the worked example on a Pixel 7 screen, incl. owner approval and offline (4 tests)
+npm run test:e2e    # on a Pixel 7 screen: the worked example, owner approval, offline, a direct API call,
+                    # reloading the app with no signal, every screen console-clean for each role,
+                    # no sideways scroll at 360px (9 tests)
 npm run test:all
 ```
 
@@ -100,23 +103,44 @@ npm run test:all
 demo data and never depend on each other. (Saved orders can't be deleted, by design, so test tenants
 stay behind; they are invisible to everyone else.)
 
-## Layout
+## Project layout
 
 ```
-supabase/migrations/     schema, rules, RLS, API functions
-src/lib/money.ts         integer arithmetic + formatting (mirrors the SQL)
-src/lib/order-draft.ts   what the screen derives from the order being built
-src/lib/outbox.ts        write-to-phone-first queue
-src/app/api/orders       POST /api/orders → place_order()
-src/components/order-screen.tsx   the screen
-src/i18n/en.ts           every user-facing string (Arabic = one more file)
-scripts/                 seed, fixtures, proof script
-tests/db, tests/e2e      integration and phone walkthrough
+supabase/migrations/          schema, rules (triggers), row level security, API functions
+src/
+  app/
+    (app)/                    signed-in screens: orders/new, orders, orders/[id], approvals, settings
+    api/orders/route.ts       POST /api/orders → place_order()
+    login/                    sign-in page
+    layout.tsx, globals.css   root layout and the house style (colours from the dashboard prototype)
+  components/
+    order-screen.tsx          the order screen
+    app-shell.tsx             sidebar on a laptop, ☰ menu on a phone
+    page-header.tsx           page header with today's rate, panels
+    notice.tsx, styles.ts     shared message box and class names
+    use-*.ts                  catalogue cache, outbox, online status
+    service-worker.tsx        registers public/sw.js (offline page loads)
+  lib/
+    money.ts                  integer money arithmetic and formatting (mirrors the SQL)
+    order-draft.ts            what the screen derives from the order being built
+    outbox.ts, send-order.ts  write-to-phone-first queue and the sender
+    api-errors.ts             database error → API error code and HTTP status
+    supabase/                 browser and server clients
+  i18n/en.ts                  every user-facing string (Arabic = one more file)
+  proxy.ts                    keeps the session fresh, sends signed-out visitors to /login
+scripts/                      seed, db push, proof script, shared fixtures
+tests/db/                     database rules through the public API, as each role
+tests/e2e/                    phone walkthrough with Playwright
 ```
 
 ## Deployment
 
-Vercel project with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The app
-never needs the secret key at runtime; only the seed script and the tests use it. CI (`.github/workflows/ci.yml`) runs
-typecheck, lint, unit tests and build on every push; with `SUPABASE_*` repository secrets set it
+Vercel, with two environment variables: `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The app never needs the secret key at runtime; only the
+seed script and the tests use it. `vercel.json` pins the functions to Frankfurt (`fra1`), next to
+the database: every page makes a few database calls, and making them across the Atlantic tripled
+page times.
+
+CI (`.github/workflows/ci.yml`) runs typecheck, lint, unit tests and the build on every push. With
+the `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` repository secrets set, it
 also runs the database and phone tests.

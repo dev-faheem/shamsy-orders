@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/logo";
+import { Notice } from "@/components/notice";
+import { buttonCls, inputCls } from "@/components/styles";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { t } from "@/i18n/en";
 
@@ -34,68 +36,53 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-panel flex flex-col">
-      <header className="bg-brand border-b-4 border-gold px-4 py-4">
-        <Logo />
+    <main className="flex min-h-dvh flex-col bg-white">
+      <header className="border-b-4 border-gold bg-brand px-4 py-3">
+        <Logo className="w-[170px]" />
       </header>
-      <div className="flex-1 flex items-start justify-center px-4 py-8">
-        <form onSubmit={signIn} className="w-full max-w-sm bg-white rounded-lg border border-line p-5 space-y-4">
-          <h1 className="text-xl font-semibold text-brand">{t.login.title}</h1>
-          <label className="block">
-            <span className="text-sm text-ink-2">{t.login.email}</span>
-            <input
-              type="email"
-              autoComplete="username"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border border-line px-3 py-3"
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm text-ink-2">{t.login.password}</span>
-            <input
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-line px-3 py-3"
-            />
-          </label>
-          {error && (
-            <p role="alert" className="text-sm text-red-ink">
-              {error}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-md bg-brand text-white py-3 font-semibold disabled:opacity-60"
-          >
-            {busy ? t.login.busy : t.login.submit}
-          </button>
+      <div className="flex flex-1 items-start justify-center px-4 py-8 lg:items-center">
+        <div className="w-full max-w-sm rounded-[4px] border border-line bg-panel p-5">
+          <h1 className="mb-4 text-xl font-bold text-ink">{t.login.title}</h1>
+          <form onSubmit={signIn} className="space-y-4 rounded-[4px] border border-line border-t-[3px] border-t-gold bg-white p-4">
+            <label className="block">
+              <span className="text-[13px] font-semibold">{t.login.email}</span>
+              <input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} className={`${inputCls} mt-1`} />
+            </label>
+            <label className="block">
+              <span className="text-[13px] font-semibold">{t.login.password}</span>
+              <input
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`${inputCls} mt-1`}
+              />
+            </label>
+            {error && <Notice tone="error">{error}</Notice>}
+            <button type="submit" disabled={busy} className={`${buttonCls} w-full py-3 text-base`}>
+              {busy ? t.login.busy : t.login.submit}
+            </button>
+          </form>
 
-          <div className="pt-2 border-t border-line">
-            <p className="text-sm text-ink-2 mb-2">{t.login.demo}</p>
-            <div className="grid gap-2">
-              {DEMO.map((d) => (
-                <button
-                  key={d.email}
-                  type="button"
-                  onClick={() => {
-                    setEmail(d.email);
-                    setPassword(d.password);
-                  }}
-                  className="text-start rounded-md border border-line px-3 py-2 text-sm hover:bg-panel"
-                >
-                  <span className="font-medium">{d.label}</span>
-                  <span className="block text-ink-2">{d.email}</span>
-                </button>
-              ))}
-            </div>
+          <h2 className="proto-h2 mt-5">{t.login.demo}</h2>
+          <div className="grid gap-2">
+            {DEMO.map((d) => (
+              <button
+                key={d.email}
+                type="button"
+                onClick={() => {
+                  setEmail(d.email);
+                  setPassword(d.password);
+                }}
+                className="rounded-[4px] border border-s-4 border-line border-s-brand-2 bg-white px-3 py-2 text-start text-[13px] hover:border-s-gold"
+              >
+                <span className="font-bold">{d.label}</span>
+                <span className="block text-ink-2">{d.email}</span>
+              </button>
+            ))}
           </div>
-        </form>
+        </div>
       </div>
     </main>
   );

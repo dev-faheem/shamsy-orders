@@ -1,27 +1,27 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /** Test data from the trial brief. Prices in US cents. */
-export const PRODUCTS = [
+const PRODUCTS = [
   { sku: "SPF-6000-ES-PLUS", name: "SPF 6000 ES Plus — 6 kW inverter", price_usd_cents: 51500, sort_order: 1 },
   { sku: "SPE-12000-ES", name: "SPE 12000 ES — 12 kW inverter", price_usd_cents: 97500, sort_order: 2 },
   { sku: "HOPE-5.0L-B1", name: "Hope 5.0L-B1 — 5 kWh battery", price_usd_cents: 81000, sort_order: 3 },
   { sku: "HOPE-16.0LM-A1", name: "Hope 16.0LM-A1 — 16 kWh battery", price_usd_cents: 207000, sort_order: 4 },
 ] as const;
 
-export const CUSTOMERS = [
+const CUSTOMERS = [
   { name: "Ahmed Trading", city: "Khartoum" },
   { name: "Nile Solar", city: "Omdurman" },
   { name: "Dongola Power", city: "Dongola" },
 ] as const;
 
-export const SETTINGS = {
+const SETTINGS = {
   day_rate_sdg_per_usd: 8200,
   min_rate_sdg_per_usd: 8000,
   discount_sand_max_bp: 300,
   discount_red_max_bp: 500,
 };
 
-export type Role = "owner" | "adviser" | "marketing" | "warehouse";
+type Role = "owner" | "adviser" | "marketing" | "warehouse";
 export interface UserSpec {
   email: string;
   password: string;

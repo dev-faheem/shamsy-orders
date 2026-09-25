@@ -52,16 +52,25 @@ export class Outbox {
     private store: KeyValueStore,
     userId: string,
   ) {
-    this.key = `shamsy.outbox.${userId}`;
+    this.key = Outbox.storageKey(userId);
   }
 
-  list(): OutboxItem[] {
+  static storageKey(userId: string) {
+    return `shamsy.outbox.${userId}`;
+  }
+
+  /** Reads a stored queue; corrupt or missing storage is an empty queue. */
+  static parse(raw: string | null): OutboxItem[] {
     try {
-      const parsed = JSON.parse(this.store.getItem(this.key) ?? "[]");
+      const parsed = JSON.parse(raw ?? "[]");
       return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
+  }
+
+  list(): OutboxItem[] {
+    return Outbox.parse(this.store.getItem(this.key));
   }
 
   private save(items: OutboxItem[]) {
