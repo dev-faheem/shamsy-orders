@@ -8,6 +8,16 @@ one exchange rate for the whole order, and totals in US dollars and Sudanese pou
 - **Note for the client:** [NOTES.md](NOTES.md): what I would do differently in the real build,
   and the points in the rules I'd like to confirm
 
+## Demo video
+
+<a href="docs/demo.mp4"><img src="docs/demo-poster.png" width="450" alt="Watch the 1:47 walkthrough"></a>
+
+A 1:47 walkthrough on the live site, recorded on phone-sized screens: the adviser on the left, the
+owner on the right. It covers signing in, roles, the sand, red and blocked discounts, the owner's
+approval, a saved order keeping its rate after the rate changes, the minimum rate, saving with no
+connection, and the server refusing the 7.25% line when called directly. Click the picture to play
+it ([docs/demo.mp4](docs/demo.mp4)).
+
 ## Demo accounts
 
 The login page has buttons that fill these in. All data is invented.
@@ -194,6 +204,7 @@ src/
 scripts/                      seed, db push, the proof script, shared fixtures
 tests/db/                     database rules through the public API
 tests/e2e/                    the phone walkthrough (Playwright)
+docs/                         the demo video and its preview image (not deployed)
 ```
 
 The design follows the client's dashboard prototype: the logo, colours, green sidebar, the page
